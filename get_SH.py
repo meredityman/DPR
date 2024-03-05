@@ -41,7 +41,6 @@ for img_path in image_paths:
     sh = np.array(shtools_getSH(img))
     sh = shtools_matrix2vec(sh)
     sh = sh[0:9]
-    sh = sh * 0.7
 
     print(sh.shape)
 
