@@ -63,7 +63,13 @@ def relight_grid(input_path, output_path):
     lightFolder = 'data/envmaps/sh'
 
     img = cv2.imread(str(input_path), cv2.IMREAD_UNCHANGED)
+    if(img.shape[2] == 3):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+        img[:,:,-1] = 255
+
     img_sml = cv2.resize(img, (512, 512))
+
+
     alpha = img_sml[:,:,3]
 
     Lab = cv2.cvtColor(img_sml[:,:,0:3], cv2.COLOR_BGR2LAB)
@@ -76,18 +82,24 @@ def relight_grid(input_path, output_path):
 
     shs = []
 
+    def smoothstep(edge0, edge1, x):
+        # Clamp x to be within the range of [edge0, edge1]
+        t = max(0, min((x - edge0) / (edge1 - edge0), 1))
+        # Use the smoothstep formula
+        return t * t * (3 - 2 * t)
+    
     for i, name in enumerate([name for ls in lights for name in ls]):
             path = Path(lightFolder, f"{name}.txt")
             sh = np.loadtxt(path)
             sh = sh[0:9]
-            sh = sh * 0.5
+            sh = sh * 0.1
             sh = np.squeeze(sh)
             shs.append((name,sh))
 
     results = {}
     for i, (name, sh) in enumerate(shs):
+        
 
-        sh *= 0.01
 
         # rendering half-sphere
         # shading = get_shading(normal, sh)
@@ -117,7 +129,7 @@ def relight_grid(input_path, output_path):
         result[:,:,3] = alpha
 
         result = cv2.resize(result, (img.shape[1], img.shape[0]))
-        image = 127 + (img[:,:,0:3] - result[:,:,0:3])
+        image = (img[:,:,0:3] - result[:,:,0:3])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
         image[:,:,3] = img[:,:,3]
         results[name] = image
